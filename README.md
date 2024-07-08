@@ -1,2 +1,2 @@
-# glob-dev-exp-project
-Global Dev Experts Project
+# glob-dev-exp-devops-project
+Global Dev Experts DevOps Project
