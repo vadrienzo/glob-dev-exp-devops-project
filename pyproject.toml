@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "glob_dev_exp_devops_project"
+version = "0.1.0"
+description = ""
+authors = ["vdiaz <vadrienzo@gmail.com>"]
+readme = "README.md"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+flask = "^3.0.3"
+selenium = "^4.22.0"
+pymysql = "^1.1.1"
+cryptography = "^42.0.8"
+requests = "^2.32.3"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.7.1"
+black = "^24.4.2"
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+profile = "black"
+line_length = 79
+skip = ["__init__.py"]
+
+
+[tool.black]
+line-length = 79
+preview = true
+skip-string-normalization = false
+include = '\.pyi?$'
+
+[tool.ruff]
+target-version = "py312"
+line-length = 79
