@@ -8,7 +8,7 @@ class TestORM:
         mock_cursor = mock.MagicMock()
         mock_cursor.connection.autocommit = mock.MagicMock(return_value=False)
 
-        orm = ORM(db_cursor=mock_cursor, auto_commit=True)
+        orm = ORM(db_cursor=mock_cursor)
         orm.create_table(
             schema_name="mydb",
             table_name="users",
@@ -26,7 +26,7 @@ class TestORM:
         mock_cursor = mock.MagicMock()
         mock_cursor.connection.autocommit = mock.MagicMock(return_value=False)
 
-        orm = ORM(db_cursor=mock_cursor, auto_commit=True)
+        orm = ORM(db_cursor=mock_cursor, table_name="users")
         orm.query(
             query="SELECT * FROM users WHERE user_id = 1",
         )
@@ -38,9 +38,8 @@ class TestORM:
         mock_cursor = mock.MagicMock()
         mock_cursor.connection.autocommit = mock.MagicMock(return_value=False)
 
-        orm = ORM(db_cursor=mock_cursor, auto_commit=True)
+        orm = ORM(db_cursor=mock_cursor, table_name="users")
         orm.insert(
-            table_name="users",
             data={
                 "user_id": 1,
                 "user_name": "user1",
@@ -55,12 +54,8 @@ class TestORM:
         mock_cursor = mock.MagicMock()
         mock_cursor.connection.autocommit = mock.MagicMock(return_value=False)
 
-        orm = ORM(db_cursor=mock_cursor, auto_commit=True)
-        orm.update(
-            table_name="users",
-            data={"user_name": "user2"},
-            where="user_id = 1",
-        )
+        orm = ORM(db_cursor=mock_cursor, table_name="users")
+        orm.update(data={"user_name": "user2"}, where="user_id = 1")
         orm.db_cursor.execute.assert_called_once_with(
             "UPDATE `users` SET `data` = '{'user_name': 'user2'}' WHERE user_id = 1;"
         )
@@ -69,11 +64,8 @@ class TestORM:
         mock_cursor = mock.MagicMock()
         mock_cursor.connection.autocommit = mock.MagicMock(return_value=False)
 
-        orm = ORM(db_cursor=mock_cursor, auto_commit=True)
-        orm.delete(
-            table_name="users",
-            where="user_id = 1",
-        )
+        orm = ORM(db_cursor=mock_cursor, table_name="users")
+        orm.delete(where="user_id = 1")
         orm.db_cursor.execute.assert_called_once_with(
             "DELETE FROM `users` WHERE user_id = 1;"
         )
@@ -82,12 +74,8 @@ class TestORM:
         mock_cursor = mock.MagicMock()
         mock_cursor.connection.autocommit = mock.MagicMock(return_value=False)
 
-        orm = ORM(db_cursor=mock_cursor, auto_commit=True)
-        orm.select(
-            table_name="users",
-            columns=["user_id", "user_name"],
-            where="user_id = 1",
-        )
+        orm = ORM(db_cursor=mock_cursor, table_name="users")
+        orm.select(columns=["user_id", "user_name"], where="user_id = 1")
         orm.db_cursor.execute.assert_called_once_with(
             "SELECT `user_id`, `user_name` FROM `users` WHERE user_id = 1"
         )
@@ -96,10 +84,8 @@ class TestORM:
         mock_cursor = mock.MagicMock()
         mock_cursor.connection.autocommit = mock.MagicMock(return_value=False)
 
-        orm = ORM(db_cursor=mock_cursor, auto_commit=True)
-        orm.get_table_columns_info(
-            table_name="users",
-        )
+        orm = ORM(db_cursor=mock_cursor, table_name="users")
+        orm.get_table_columns_info()
         orm.db_cursor.execute.assert_called_once_with(
             "SHOW COLUMNS FROM `users`;"
         )
@@ -108,10 +94,8 @@ class TestORM:
         mock_cursor = mock.MagicMock()
         mock_cursor.connection.autocommit = mock.MagicMock(return_value=False)
 
-        orm = ORM(db_cursor=mock_cursor, auto_commit=True)
-        orm.get_table_columns(
-            table_name="users",
-        )
+        orm = ORM(db_cursor=mock_cursor, table_name="users")
+        orm.get_table_columns()
         # The method get_table_columns_info is called inside get_table_columns
         orm.db_cursor.execute.assert_called_once_with(
             "SHOW COLUMNS FROM `users`;"
