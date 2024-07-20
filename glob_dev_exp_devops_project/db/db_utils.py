@@ -10,15 +10,14 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import declarative_base
 from typing_extensions import Annotated
 
-
-SCHEMA_NAME = "mydb"
-USER_NAME = "project_user "
-PASSWORD = "password"
-PORT = 3306
-HOST = "127.0.0.1"
+# Database connection details
+DB_SCHEMA_NAME = "mydb"
+DB_USER_NAME = "project_user "
+DB_PASSWORD = "password"
+DB_PORT = 3306
+DB_HOST = "127.0.0.1"
 
 # Table schema
-
 Base = declarative_base()
 
 

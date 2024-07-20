@@ -23,19 +23,22 @@ using a MySQL table called users:
 
 from __future__ import annotations
 
+from pydantic_core import ValidationError
 import pymysql
-
+from flask import Response, jsonify, abort
 from pydantic import BaseModel
-from typing import Any, Mapping, NamedTuple, Protocol, Sequence
-
+from sqlalchemy.orm.session import Session
+from typing import Any, Literal, Mapping, NamedTuple, Protocol, Sequence
 
 from glob_dev_exp_devops_project.db.db_utils import (
-    HOST,
-    PASSWORD,
-    PORT,
-    SCHEMA_NAME,
-    USER_NAME,
+    DB_HOST,
+    DB_PASSWORD,
+    DB_PORT,
+    DB_SCHEMA_NAME,
+    DB_USER_NAME,
+    UsersDataModel,
 )
+from glob_dev_exp_devops_project.exceptions import DBFailureReasonsEnum
 
 FilteredData = NamedTuple(
     "FilteredData", [("data", dict[str, Any]), ("where", str), ("query", str)]
@@ -56,36 +59,26 @@ def get_connection():
         The connection to the database
     """
     return pymysql.connect(
-        host=HOST, port=PORT, user=USER_NAME, passwd=PASSWORD, db=SCHEMA_NAME
+        host=DB_HOST,
+        port=DB_PORT,
+        user=DB_USER_NAME,
+        passwd=DB_PASSWORD,
+        db=DB_SCHEMA_NAME,
     )
 
 
 class DBAPICursor(Protocol):
     """protocol representing a :pep:`249` database cursor.
 
-    .. versionadded:: 2.0
-
-    .. seealso::
-
-        `Cursor Objects <https://www.python.org/dev/peps/pep-0249/#cursor-objects>`_
-        - in :pep:`249`
+    `Cursor Objects <https://www.python.org/dev/peps/pep-0249/#cursor-objects>`_
+    - in :pep:`249`
 
     """  # noqa: E501
 
     @property
     def description(
         self,
-    ) -> _DBAPICursorDescription:
-        """The description attribute of the Cursor.
-
-        .. seealso::
-
-            `cursor.description <https://www.python.org/dev/peps/pep-0249/#description>`_
-            - in :pep:`249`
-
-
-        """  # noqa: E501
-        ...
+    ) -> _DBAPICursorDescription: ...
 
     @property
     def rowcount(self) -> int: ...
@@ -330,3 +323,140 @@ class ORM:
             validation_model.model_validate(dict(zip(columns, row)))
             for row in fetched_data
         ]
+
+
+def add_user_data(
+    db_session: Session, user_id: int, new_user_data: UsersDataModel
+) -> tuple[Response, Literal[500] | Literal[200]]:
+    """
+    Add the user data to the database. If the user_id already exists, it will
+    return an error message.
+
+    Args:
+        db_session: The database session.
+        user_id: The user id.
+        new_user_data: The user data to be added.
+
+    Returns:
+        Depending on the success or failure of the operation, it will return
+        a JSON response with the status and the user added or an error message.
+    """
+    with db_session.connection() as db_conn:
+        my_db = ORM(db_cursor=db_conn.connection.cursor(), table_name="users")
+
+        # check if the user_id already exists
+        fetched_user_data = my_db.select(
+            columns=["user_id"],
+            where=f"user_id = {user_id}",
+        )
+        # if the user_id already exists, return an error
+        if fetched_user_data:
+            return abort(500, DBFailureReasonsEnum.ID_ALREADY_EXISTS)
+        # insert the new user
+        my_db.insert(**new_user_data.model_dump())
+    return (
+        jsonify({"status": "ok", "user_added": new_user_data.user_id}),
+        200,
+    )
+
+
+def get_user_from_database(
+    db_session: Session, user_id: int
+) -> tuple[Response, Literal[500] | Literal[200] | Literal[422]]:
+    """
+    Get the user name from the database.
+
+    Args:
+        db_session: The database session.
+        user_id: The user id.
+
+    Returns:
+        Depending on the success or failure of the operation, it will return
+        a JSON response with the status and the user name or an error message.
+    """
+    with db_session.connection() as db_conn:
+        my_db = ORM(db_cursor=db_conn.connection.cursor(), table_name="users")
+        fetched_user_data = my_db.select(
+            columns=["user_name"], where=f"user_id = {user_id}"
+        )
+        # if the fetched data is empty, return an error
+        if not fetched_user_data:
+            return abort(500, DBFailureReasonsEnum.NO_SUCH_ID)
+        if len(fetched_user_data) > 1:
+            # this should never happen
+            raise ValueError(f"More than one user with the same id: {user_id}")
+
+        # process the fetched data as json and get the user name
+        try:
+            processed_data: UsersDataModel = my_db.validate_processed_data(
+                validation_model=UsersDataModel, fetched_data=fetched_user_data
+            ).pop()
+        except ValidationError as e:
+            return abort(422, str(e))
+    return (
+        jsonify(
+            {
+                "status": "ok",
+                **processed_data.model_dump(),
+            }
+        ),
+        200,
+    )
+
+
+def update_user_data(
+    db_session: Session, user_id: int, validated_data: UsersDataModel
+) -> tuple[Response, Literal[500]] | tuple[Response, Literal[200]]:
+    """
+    Update the user name in the database.
+
+    Args:
+        db_session: The database session.
+        user_id: The user id.
+        validated_data: The user data.
+
+    Returns:
+        Depending on the success or failure of the operation, it will return
+        a JSON response with the status and the user updated or an error message.
+    """
+    with db_session.connection() as db_conn:
+        my_db = ORM(db_cursor=db_conn.connection.cursor(), table_name="users")
+        fetched_user_data = my_db.select(
+            columns=["user_name"], where=f"user_id = {user_id}"
+        )
+        if not fetched_user_data:
+            return abort(500, DBFailureReasonsEnum.NO_SUCH_ID)
+        my_db.update(
+            where=f"user_id = {user_id}", **validated_data.model_dump()
+        )
+
+    return (
+        jsonify({"status": "ok", "user_updated": validated_data.user_id}),
+        200,
+    )
+
+
+def delete_user_data(
+    db_session: Session, user_id: int
+) -> tuple[Response, Literal[500]] | tuple[Response, Literal[200]]:
+    """
+    Delete the user from the database.
+
+    Args:
+        db_session: The database session.
+        user_id: The user id.
+
+    Returns:
+        Depending on the success or failure of the operation, it will return
+        a JSON response with the status and the user deleted or an error message.
+    """
+    with db_session.connection() as db_conn:
+        my_db = ORM(db_cursor=db_conn.connection.cursor(), table_name="users")
+        fetched_user_data = my_db.select(
+            columns=["user_name"], where=f"user_id = {user_id}"
+        )
+        if not fetched_user_data:
+            return abort(500, DBFailureReasonsEnum.NO_SUCH_ID)
+        my_db.delete(where=f"user_id = {user_id}")
+
+    return jsonify({"status": "ok", "user_deleted": user_id}), 200
