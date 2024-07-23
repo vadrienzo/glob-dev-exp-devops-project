@@ -76,24 +76,31 @@ from glob_dev_exp_devops_project.exceptions import (
 
 # Flask connection details
 SERVER_RUN_HOST = os.environ.get("SERVER_RUN_HOST", "127.0.0.1")
-SERVER_RUN_PORT = int(os.environ.get("SERVER_RUN_PORT", 8000))
-SERVER_TEMPLATE_FOLDER = (
+SERVER_RUN_PORT = int(os.environ.get("SERVER_RUN_PORT", 5000))
+SERVER_HTML_TEMPLATE_FOLDER = (
     Path(__file__).parent / ".." / ".." / "templates" / "server"
 )
+SERVER_CSS_STATIC_FOLDER = Path(__file__).parent / ".." / ".." / "static"
 
 
 # Flask app
 def create_flask_app(
     template_folder: Path = Path(__file__).parent / "templates",
+    static_folder: Path = Path(__file__).parent / "static",
 ):
-    app = Flask(__name__, template_folder=template_folder)
+    app = Flask(
+        __name__, template_folder=template_folder, static_folder=static_folder
+    )
     # app.register_error_handler(404, page_not_found)
     # app.register_error_handler(500, internal_server_error)
     # app.register_error_handler(422, invalid_request)
     return app
 
 
-rest_app = create_flask_app(template_folder=SERVER_TEMPLATE_FOLDER)
+rest_app = create_flask_app(
+    template_folder=SERVER_HTML_TEMPLATE_FOLDER,
+    static_folder=SERVER_CSS_STATIC_FOLDER,
+)
 
 # Pool of connections for the database
 db_engine = create_engine(
@@ -105,6 +112,7 @@ db_engine = create_engine(
 db_session = sessionmaker(bind=db_engine)(expire_on_commit=False)
 
 
+@rest_app.route("/users")
 @rest_app.route("/users/<int:user_id>", methods=["POST"])
 def add_user(
     user_id: int,
@@ -131,10 +139,12 @@ def add_user(
     )
 
 
+@rest_app.route("/users")
 @rest_app.route("/users/<int:user_id>", methods=["GET"])
 def get_user(
     user_id: int,
 ) -> tuple[Response, Literal[500] | Literal[200] | Literal[422]]:
+    # ) -> tuple[dict[str, Any], Literal[200]]:
     """
     Get the user name from the database.
 
@@ -146,8 +156,17 @@ def get_user(
         a JSON response with the status and the user name or an error message.
     """
     return get_user_from_database(db_session=db_session, user_id=user_id)
+    # if user_id != 1:
+    #     return abort(404)
+    # return {
+    #     "status": "ok",
+    #     "user_name": "john",
+    #     "user_id": 1,
+    #     "creation_date": "2020-01-01T10:24:21",
+    # }, 200
 
 
+@rest_app.route("/users")
 @rest_app.route("/users/<int:user_id>", methods=["PUT"])
 def update_user(
     user_id: int,
@@ -174,6 +193,7 @@ def update_user(
     )
 
 
+@rest_app.route("/users")
 @rest_app.route("/users/<int:user_id>", methods=["DELETE"])
 def delete_user(
     user_id: int,

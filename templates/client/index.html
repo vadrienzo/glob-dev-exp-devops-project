@@ -1,14 +1,18 @@
-<!doctype html>
-<html>
-
-<head>
-    <title>This is the title of the webpage!</title>
+<html <head lang="en">
+<meta charset="UTF-8">
+<title>Web App Project</title>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css')}}">
 </head>
 
-<body>
-    <p>This is an example paragraph. Anything in the <strong>body</strong> tag will appear on the page, just like this
-        <strong>p</strong> tag and its contents.
-    </p>
+<body <div class="container" style="text-align: center;">
+    <img src="{{ url_for('static', filename='images/glob-dev-exp-logo.png')}}" alt="glo-dev-exp-logo">
+    <h1>Web App Project</h1>
+    <form action="/get_user_data" method="get">
+        <input type="text" name="user_id" placeholder="Enter User ID" style="font-size: 1.2em;">
+        <button type="submit" class="brutal-btn" style="color: white;">Get User Data</button>
+    </form>
+    <div id="data"></div>
+
 </body>
 
 </html>
