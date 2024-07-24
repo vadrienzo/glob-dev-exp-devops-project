@@ -1,0 +1,41 @@
+<!-- Nice welcome page for the client to represent app to get user data-->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Web App Project</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css')}}">
+</head>
+
+<body>
+    <div class="container" style="text-align: center;">
+        <img src="{{ url_for('static', filename='images/glob-dev-exp-logo.png')}}" alt="glo-dev-exp-logo">
+        <h1>User data for id: {{ user_id }}</h1>
+    </div>
+
+    <table style="width: 50%; border-collapse: collapse;  text-align: center;">
+        <tr>
+            <th style=>User ID</th>
+            <th style=>Name</th>
+            <th style=>Creation date</th>
+        </tr>
+
+        <tr>
+            <td>{{ users.user_id }}</td>
+            <td>{{ users.user_name }}</td>
+            <td> {{ users.creation_date }}</td>
+        </tr>
+        <h3 style="color: green; text-align: center;"> User data added successfully!</h3>
+
+    </table>
+    <div class="button-container" style="text-align: center;">
+        <form action="/add_user_data" method="post">
+            <button class="brutal-btn" style="color: white; ">Add User Data</button>
+        </form>
+    </div>
+    <div id="data"></div>
+</body>
+
+
+
+</html>

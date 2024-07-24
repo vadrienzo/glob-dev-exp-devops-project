@@ -1,0 +1,23 @@
+<html <head lang="en">
+<meta charset="UTF-8">
+<title>Web App Project</title>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css')}}">
+</head>
+
+<body <div class="container" style="text-align: center;">
+    <img src="{{ url_for('static', filename='images/glob-dev-exp-logo.png')}}" alt="glo-dev-exp-logo">
+    <h1>Web App Project</h1>
+    <h2> Select the one of the following options to interact with the data:</h2>
+    </div class="button-container">
+    <form action="/get_user_data" method="get">
+        <button class="brutal-btn" style="color: white;">Get User Data</button>
+    </form>
+    <form action="/add_user_data" method="get">
+        <button class="brutal-btn" style="color: white;">Add User Data</button>
+    </form>
+    </div>
+    <div id="data"></div>
+
+</body>
+
+</html>

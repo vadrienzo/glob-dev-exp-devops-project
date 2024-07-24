@@ -1,0 +1,20 @@
+<meta charset="UTF-8">
+<title>Web App Project</title>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css')}}">
+</head>
+
+<body <div class="container" style="text-align: center;">
+    <img src="{{ url_for('static', filename='images/glob-dev-exp-logo.png')}}" alt="glo-dev-exp-logo">
+    <h1>Web App Project</h1>
+    <h2> Enter the information od the user:</h2>
+    <form action="/display_added_user_data" method="POST">
+        <div><label>User ID: <input type="text" name="user_id"></label></div>
+        <div><label>User Name: <input type="text" name="user_name"></label></div>
+        <div><label>Creation Date: <input type="text" name="creation_date"></label></div>
+        <input type="submit" value="Submit">
+    </form>
+    <div id="data"></div>
+
+</body>
+
+</html>
