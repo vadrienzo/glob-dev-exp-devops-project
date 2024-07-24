@@ -51,24 +51,17 @@ from pathlib import Path
 from flask import Flask, request, jsonify, abort
 from flask.wrappers import Response
 from pydantic_core import ValidationError
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from typing import Any, Literal
 
 from glob_dev_exp_devops_project.db.db_connector import (
     add_user_data,
     delete_user_data,
+    get_connection,
     get_user_from_database,
     update_user_data,
+    create_table,
 )
-from glob_dev_exp_devops_project.db.db_utils import (
-    DB_HOST,
-    DB_PASSWORD,
-    DB_PORT,
-    DB_SCHEMA_NAME,
-    DB_USER_NAME,
-    UsersDataModel,
-)
+from glob_dev_exp_devops_project.db.db_utils import UsersDataModel
 from glob_dev_exp_devops_project.exceptions import (
     DBFailureReasonsEnum,
     ServerFailureReasonsEnum,
@@ -102,15 +95,6 @@ rest_app = create_flask_app(
     static_folder=SERVER_CSS_STATIC_FOLDER,
 )
 
-# Pool of connections for the database
-db_engine = create_engine(
-    f"mysql+pymysql://{DB_USER_NAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_SCHEMA_NAME}",
-    pool_recycle=3600,
-    pool_reset_on_return=None,
-    isolation_level="AUTOCOMMIT",
-)
-db_session = sessionmaker(bind=db_engine)(expire_on_commit=False)
-
 
 @rest_app.route("/users")
 @rest_app.route("/users/<int:user_id>", methods=["POST"])
@@ -127,7 +111,7 @@ def add_user(
         Depending on the success or failure of the operation, it will return
         a JSON response with the status and the user added or an error message.
     """
-    request_data: dict[str, Any] = request.json  # type: ignore
+    request_data: dict[str, Any] = jsonify(request.form).json  # type: ignore
     # validate the data using pydantic
     try:
         new_user_data = UsersDataModel.model_validate(request_data)
@@ -135,7 +119,9 @@ def add_user(
         return abort(422, str(e))
 
     return add_user_data(
-        db_session=db_session, user_id=user_id, new_user_data=new_user_data
+        db_connection=get_connection(),
+        user_id=user_id,
+        new_user_data=new_user_data,
     )
 
 
@@ -155,7 +141,9 @@ def get_user(
         Depending on the success or failure of the operation, it will return
         a JSON response with the status and the user name or an error message.
     """
-    return get_user_from_database(db_session=db_session, user_id=user_id)
+    return get_user_from_database(
+        db_connection=get_connection(), user_id=user_id
+    )
     # if user_id != 1:
     #     return abort(404)
     # return {
@@ -189,7 +177,9 @@ def update_user(
         return abort(422, str(e))
 
     return update_user_data(
-        db_session=db_session, user_id=user_id, validated_data=validated_data
+        db_connection=get_connection(),
+        user_id=user_id,
+        validated_data=validated_data,
     )
 
 
@@ -208,7 +198,7 @@ def delete_user(
         Depending on the success or failure of the operation, it will return
         a JSON response with the status and the user deleted or an error message.
     """
-    return delete_user_data(db_session=db_session, user_id=user_id)
+    return delete_user_data(db_connection=get_connection(), user_id=user_id)
 
 
 @rest_app.errorhandler(code_or_exception=404)
@@ -248,4 +238,6 @@ def invalid_request(e) -> tuple[Response, Literal[422]]:
 
 
 if __name__ == "__main__":
+    # create tables in the database
+    create_table(db_connection=get_connection(), table_name="users")
     rest_app.run(host=SERVER_RUN_HOST, port=SERVER_RUN_PORT, debug=True)

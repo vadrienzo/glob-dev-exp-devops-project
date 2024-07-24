@@ -27,7 +27,6 @@ from pydantic_core import ValidationError
 import pymysql
 from flask import Response, jsonify, abort
 from pydantic import BaseModel
-from sqlalchemy.orm.session import Session
 from typing import Any, Literal, Mapping, NamedTuple, Protocol, Sequence
 
 from glob_dev_exp_devops_project.db.db_utils import (
@@ -36,6 +35,7 @@ from glob_dev_exp_devops_project.db.db_utils import (
     DB_PORT,
     DB_SCHEMA_NAME,
     DB_USER_NAME,
+    TABLE_SCHEMAS,
     UsersDataModel,
 )
 from glob_dev_exp_devops_project.exceptions import DBFailureReasonsEnum
@@ -326,24 +326,27 @@ class ORM:
 
 
 def add_user_data(
-    db_session: Session, user_id: int, new_user_data: UsersDataModel
+    db_connection: pymysql.Connection,
+    user_id: int,
+    new_user_data: UsersDataModel,
+    table_name: str = "users",
 ) -> tuple[Response, Literal[500] | Literal[200]]:
     """
     Add the user data to the database. If the user_id already exists, it will
     return an error message.
 
     Args:
-        db_session: The database session.
+        db_connection: The database connection.
         user_id: The user id.
         new_user_data: The user data to be added.
+        table_name: The name of the table.
 
     Returns:
         Depending on the success or failure of the operation, it will return
         a JSON response with the status and the user added or an error message.
     """
-    with db_session.connection() as db_conn:
-        my_db = ORM(db_cursor=db_conn.connection.cursor(), table_name="users")
-
+    with db_connection as db_conn:
+        my_db = ORM(db_cursor=db_conn.cursor(), table_name=table_name)
         # check if the user_id already exists
         fetched_user_data = my_db.select(
             columns=["user_id"],
@@ -361,21 +364,21 @@ def add_user_data(
 
 
 def get_user_from_database(
-    db_session: Session, user_id: int
+    db_connection: pymysql.Connection, user_id: int
 ) -> tuple[Response, Literal[500] | Literal[200] | Literal[422]]:
     """
     Get the user name from the database.
 
     Args:
-        db_session: The database session.
+        db_connection: The database connection.
         user_id: The user id.
 
     Returns:
         Depending on the success or failure of the operation, it will return
         a JSON response with the status and the user name or an error message.
     """
-    with db_session.connection() as db_conn:
-        my_db = ORM(db_cursor=db_conn.connection.cursor(), table_name="users")
+    with db_connection as db_conn:
+        my_db = ORM(db_cursor=db_conn.cursor(), table_name="users")
         fetched_user_data = my_db.select(
             columns=["user_name"], where=f"user_id = {user_id}"
         )
@@ -405,13 +408,15 @@ def get_user_from_database(
 
 
 def update_user_data(
-    db_session: Session, user_id: int, validated_data: UsersDataModel
+    db_connection: pymysql.Connection,
+    user_id: int,
+    validated_data: UsersDataModel,
 ) -> tuple[Response, Literal[500]] | tuple[Response, Literal[200]]:
     """
     Update the user name in the database.
 
     Args:
-        db_session: The database session.
+        db_connection: The database connection.
         user_id: The user id.
         validated_data: The user data.
 
@@ -419,8 +424,8 @@ def update_user_data(
         Depending on the success or failure of the operation, it will return
         a JSON response with the status and the user updated or an error message.
     """
-    with db_session.connection() as db_conn:
-        my_db = ORM(db_cursor=db_conn.connection.cursor(), table_name="users")
+    with db_connection as db_conn:
+        my_db = ORM(db_cursor=db_conn.cursor(), table_name="users")
         fetched_user_data = my_db.select(
             columns=["user_name"], where=f"user_id = {user_id}"
         )
@@ -437,21 +442,21 @@ def update_user_data(
 
 
 def delete_user_data(
-    db_session: Session, user_id: int
+    db_connection: pymysql.Connection, user_id: int
 ) -> tuple[Response, Literal[500]] | tuple[Response, Literal[200]]:
     """
     Delete the user from the database.
 
     Args:
-        db_session: The database session.
+        db_connection: The database connection.
         user_id: The user id.
 
     Returns:
         Depending on the success or failure of the operation, it will return
         a JSON response with the status and the user deleted or an error message.
     """
-    with db_session.connection() as db_conn:
-        my_db = ORM(db_cursor=db_conn.connection.cursor(), table_name="users")
+    with db_connection as db_conn:
+        my_db = ORM(db_cursor=db_conn.cursor(), table_name="users")
         fetched_user_data = my_db.select(
             columns=["user_name"], where=f"user_id = {user_id}"
         )
@@ -460,3 +465,35 @@ def delete_user_data(
         my_db.delete(where=f"user_id = {user_id}")
 
     return jsonify({"status": "ok", "user_deleted": user_id}), 200
+
+
+def create_table(
+    db_connection: pymysql.Connection,
+    table_name: str,
+    schema_name: str = DB_SCHEMA_NAME,
+    table_schemas: dict[str, Any] | None = None,
+) -> None:
+    """
+    Create a table in the corresponding database.
+    This table must have a primary key
+
+    Args:
+        db_connection: The database connection.
+        table_name: The name of the table.
+        schema_name: The name of the schema.
+
+    """
+    table_schemas = table_schemas or TABLE_SCHEMAS
+    if table_name not in table_schemas:
+        raise ValueError(f"Table schema for {table_name} not found")
+    with db_connection as db_conn:
+        my_db = ORM(db_cursor=db_conn.cursor(), table_name=table_name)
+        # check if there is such table
+        try:
+            my_db.get_table_columns_info()
+        except pymysql.err.ProgrammingError:
+            my_db.create_table(
+                schema_name=schema_name,
+                table_name=table_name,
+                table_schema=table_schemas[table_name],
+            )

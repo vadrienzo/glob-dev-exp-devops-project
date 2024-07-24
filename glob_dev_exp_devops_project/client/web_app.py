@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 import requests
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 from glob_dev_exp_devops_project.server.rest_app import (
     SERVER_RUN_HOST,
@@ -51,8 +51,36 @@ web_app = create_flask_app(
 # The backend will query the database and return the user name
 
 
+@web_app.route("/add_user_data", methods=["POST"])
+def add_user_data():
+    return render_template("add_user_data.html")
+
+
+@web_app.route("/display_added_user_data", methods=["POST"])
+def display_added_user_data():
+    if request.method == "POST":
+        request_data: dict[str, Any] = jsonify(request.form).json  # type: ignore
+        user_id = int(request_data["user_id"])
+        response = requests.post(
+            f"http://{SERVER_RUN_HOST}:{SERVER_RUN_PORT}/users/{user_id}",
+            data=jsonify(request_data).json,
+        )
+        if response.status_code != 200:
+            return render_template(
+                "error.html", error="User ID not found in the database"
+            )
+    return render_template(
+        "display_added_user_data.html", user_id=user_id, users=request_data
+    )
+
+
 @web_app.route("/get_user_data", methods=["GET"])
 def get_user_data():
+    return render_template("get_user_data.html")
+
+
+@web_app.route("/display_user_data", methods=["GET"])
+def display_user_data():
     if request.method == "GET":
         user_id = request.args.get("user_id")
         if user_id is None:
@@ -69,7 +97,9 @@ def get_user_data():
                 "error.html", error="User ID not found in the database"
             )
         users: dict[str, Any] = response.json()
-    return render_template("get_user_data.html", user_id=user_id, users=users)
+    return render_template(
+        "display_user_data.html", user_id=user_id, users=users
+    )
 
 
 @web_app.route("/")

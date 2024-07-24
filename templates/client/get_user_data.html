@@ -1,29 +1,19 @@
-<!-- Nice welcome page for the client to represent app to get user data-->
-<!DOCTYPE html>
-<html>
-
-<head>
-    <title>Web App Project</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css')}}">
+<html <head lang="en">
+<meta charset="UTF-8">
+<title>Web App Project</title>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css')}}">
 </head>
 
-<body>
-    <div class="container" style="text-align: center;">
-        <img src="{{ url_for('static', filename='images/glob-dev-exp-logo.png')}}" alt="glo-dev-exp-logo">
-        <h1>User data for id: {{ user_id }}</h1>
-    </div>
+<body <div class="container" style="text-align: center;">
+    <img src="{{ url_for('static', filename='images/glob-dev-exp-logo.png')}}" alt="glo-dev-exp-logo">
+    <h1>Web App Project</h1>
+    <form action="/display_user_data" method="get">
+        <input type="text" name="user_id" placeholder="Enter User ID" style="font-size: 1.2em;">
+        <button type="submit" class="brutal-btn" style="color: white;">Get User Data</button>
+    </form>
 
-    <table style="width: 50%; border-collapse: collapse;  text-align: center;">
-        <tr>
-            <th style=>User ID</th>
-            <th style=>Name</th>
-            <th style=>Creation date</th>
-        </tr>
+    <div id="data"></div>
 
-        <tr>
-            <td>{{ users.user_id }}</td>
-            <td>{{ users.user_name }}</td>
-            <td> {{ users.creation_date }}</td>
-        </tr>
+</body>
 
 </html>

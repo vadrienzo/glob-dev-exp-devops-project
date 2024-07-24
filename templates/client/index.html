@@ -6,13 +6,18 @@
 
 <body <div class="container" style="text-align: center;">
     <img src="{{ url_for('static', filename='images/glob-dev-exp-logo.png')}}" alt="glo-dev-exp-logo">
-    <h1>Web App Project</h1>
+    <h2> Welcome to the Web App Project
+    </h2>
+    <h2> Select the one of the following options to interact with the data:</h2>
+    </div class="btn-groupr">
     <form action="/get_user_data" method="get">
-        <input type="text" name="user_id" placeholder="Enter User ID" style="font-size: 1.2em;">
-        <button type="submit" class="brutal-btn" style="color: white;">Get User Data</button>
+        <button class="brutal-btn" style="color: white;">Get User Data</button>
     </form>
+    <form action="/add_user_data" method="post">
+        <button class="brutal-btn" style="color: white;">Add User Data</button>
+    </form>
+    </div>
     <div id="data"></div>
-
 </body>
 
 </html>
