@@ -23,11 +23,12 @@ using a MySQL table called users:
 
 from __future__ import annotations
 
-from pydantic_core import ValidationError
-import pymysql
-from flask import Response, jsonify, abort
-from pydantic import BaseModel
 from typing import Any, Literal, Mapping, NamedTuple, Protocol, Sequence
+
+import pymysql
+from flask import Response, abort, jsonify
+from pydantic import BaseModel
+from pydantic_core import ValidationError
 
 from glob_dev_exp_devops_project.db.db_utils import (
     DB_HOST,

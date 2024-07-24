@@ -48,18 +48,19 @@ Following the above (marked) example, when using delete on
 
 import os
 from pathlib import Path
-from flask import Flask, request, jsonify, abort
+from typing import Any, Literal
+
+from flask import Flask, abort, jsonify, request
 from flask.wrappers import Response
 from pydantic_core import ValidationError
-from typing import Any, Literal
 
 from glob_dev_exp_devops_project.db.db_connector import (
     add_user_data,
+    create_table,
     delete_user_data,
     get_connection,
     get_user_from_database,
     update_user_data,
-    create_table,
 )
 from glob_dev_exp_devops_project.db.db_utils import UsersDataModel
 from glob_dev_exp_devops_project.exceptions import (

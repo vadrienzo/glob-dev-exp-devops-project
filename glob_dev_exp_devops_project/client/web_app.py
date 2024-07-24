@@ -11,8 +11,8 @@ to simplify testing.
 import os
 from pathlib import Path
 from typing import Any
-import requests
 
+import requests
 from flask import Flask, jsonify, redirect, render_template, request, url_for
 
 from glob_dev_exp_devops_project.server.rest_app import (

@@ -1,6 +1,6 @@
-from glob_dev_exp_devops_project.db.db_connector import ORM
-
 from unittest import mock
+
+from glob_dev_exp_devops_project.db.db_connector import ORM
 
 
 class TestORM:
