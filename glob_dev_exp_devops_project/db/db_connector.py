@@ -23,12 +23,13 @@ using a MySQL table called users:
 
 from __future__ import annotations
 
-from typing import Any, Literal, Mapping, NamedTuple, Protocol, Sequence
-
 import pymysql
+
 from flask import Response, abort, jsonify
 from pydantic import BaseModel
 from pydantic_core import ValidationError
+from pymysqlpool import ConnectionPool
+from typing import Any, Literal, Mapping, NamedTuple, Protocol, Sequence
 
 from glob_dev_exp_devops_project.db.db_utils import (
     DB_HOST,
@@ -41,6 +42,26 @@ from glob_dev_exp_devops_project.db.db_utils import (
 )
 from glob_dev_exp_devops_project.exceptions import DBFailureReasonsEnum
 
+# creating a pool of database connections
+mypool = ConnectionPool(
+    name="mypool",
+    host=DB_HOST,
+    user=DB_USER_NAME,
+    password=DB_PASSWORD,
+    port=DB_PORT,
+    db=DB_SCHEMA_NAME,
+    con_lifetime=600,
+    maxsize=10,
+    size=5,
+    autocommit=True,
+    charset="utf8mb4",
+)
+
+
+def get_connection() -> pymysql.Connection:
+    return mypool.get_connection()
+
+
 FilteredData = NamedTuple(
     "FilteredData", [("data", dict[str, Any]), ("where", str), ("query", str)]
 )
@@ -50,22 +71,6 @@ _CoreMultiExecuteParams = Sequence[_CoreSingleExecuteParams]
 _DBAPICursorDescription = Sequence[Any] | _CoreSingleExecuteParams
 _DBAPIMultiExecuteParams = Sequence[Sequence[Any]] | _CoreMultiExecuteParams
 _DBAPISingleExecuteParams = Sequence[Any] | _CoreSingleExecuteParams
-
-
-def get_connection():
-    """
-    Get a connection to the database
-
-    Returns:
-        The connection to the database
-    """
-    return pymysql.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER_NAME,
-        passwd=DB_PASSWORD,
-        db=DB_SCHEMA_NAME,
-    )
 
 
 class DBAPICursor(Protocol):
@@ -380,9 +385,7 @@ def get_user_from_database(
     """
     with db_connection as db_conn:
         my_db = ORM(db_cursor=db_conn.cursor(), table_name="users")
-        fetched_user_data = my_db.select(
-            columns=["user_name"], where=f"user_id = {user_id}"
-        )
+        fetched_user_data = my_db.select(where=f"user_id = {user_id}")
         # if the fetched data is empty, return an error
         if not fetched_user_data:
             return abort(500, DBFailureReasonsEnum.NO_SUCH_ID)

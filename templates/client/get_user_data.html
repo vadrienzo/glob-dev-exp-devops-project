@@ -1,5 +1,6 @@
-<html <head lang="en">
-<meta charset="UTF-8">
+<!DOCTYPE html>
+<html lang="en">
+
 <title>Web App Project</title>
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css')}}">
 </head>
@@ -11,9 +12,11 @@
         <input type="text" name="user_id" placeholder="Enter User ID" style="font-size: 1.2em;">
         <button type="submit" class="brutal-btn" style="color: white;">Get User Data</button>
     </form>
-
+    <br>
     <div id="data"></div>
-
+    <div class="container" style="text-align: center;">
+        <a href="/" style="text-align: center;">Go back to home page</a>
+    </div>
 </body>
 
 </html>

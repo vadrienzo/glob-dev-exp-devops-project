@@ -145,14 +145,6 @@ def get_user(
     return get_user_from_database(
         db_connection=get_connection(), user_id=user_id
     )
-    # if user_id != 1:
-    #     return abort(404)
-    # return {
-    #     "status": "ok",
-    #     "user_name": "john",
-    #     "user_id": 1,
-    #     "creation_date": "2020-01-01T10:24:21",
-    # }, 200
 
 
 @rest_app.route("/users")

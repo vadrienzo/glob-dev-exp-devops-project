@@ -79,7 +79,7 @@ def get_user_data():
     return render_template("get_user_data.html")
 
 
-@web_app.route("/display_user_data", methods=["GET"])
+@web_app.route("/display_user_data", methods=["GET", "POST"])
 def display_user_data():
     if request.method == "GET":
         user_id = request.args.get("user_id")
@@ -97,6 +97,10 @@ def display_user_data():
                 "error.html", error="User ID not found in the database"
             )
         users: dict[str, Any] = response.json()
+    elif request.method == "POST":
+        users: dict[str, Any] = jsonify(request.form).json  # type: ignore
+        user_id = int(users["user_id"])
+
     return render_template(
         "display_user_data.html", user_id=user_id, users=users
     )
