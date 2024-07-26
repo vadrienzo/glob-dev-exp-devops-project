@@ -1,0 +1,42 @@
+<!-- Nice welcome page for the client to represent app to get user data-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Web App Project</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css')}}">
+</head>
+
+<body>
+    <div class="container" style="text-align: center;">
+        <img src="{{ url_for('static', filename='images/glob-dev-exp-logo.png')}}" alt="glo-dev-exp-logo">
+        <h1>All Users:</h1>
+    </div>
+
+    <table style="width: 50%; border-collapse: collapse;  text-align: center;">
+        <TR>
+            <th style=>User ID</th>
+            <th style=>Name</th>
+            <th style=>Creation date</th>
+        </TR>
+
+        {% for user in users %}
+        <tr>
+            <td>{{ user.user_id }}</td>
+            <td>{{ user.user_name }}</td>
+            <td> {{ user.creation_date }}</td>
+        </tr>
+        {% endfor %}
+
+
+    </table>
+    <br>
+    <div class="container" style="text-align: center;">
+        <a href="/get_user_data" style="text-align: center;">Go back to get another user</a>
+    </div>
+    <br>
+    <div class="container" style="text-align: center;">
+        <a href="/" style="text-align: center;">Go back to home page</a>
+    </div>
+
+</html>

@@ -411,6 +411,51 @@ def get_user_from_database(
     )
 
 
+def get_all_users_from_database(
+    db_connection: pymysql.Connection,
+) -> tuple[Response, Literal[500] | Literal[200] | Literal[422]]:
+    """
+    Get the user name from the database.
+
+    Args:
+        db_connection: The database connection.
+
+    Returns:
+        Depending on the success or failure of the operation, it will return
+        a JSON response with the status and the user name or an error message.
+    """
+    with db_connection as db_conn:
+        my_db = ORM(db_cursor=db_conn.cursor(), table_name="users")
+        all_users_data = my_db.select()
+        # if the fetched data is empty, return an error
+        if not all_users_data:
+            return abort(500, DBFailureReasonsEnum.NO_SUCH_ID)
+        if len(all_users_data) < 1:
+            # this should never happen
+            raise ValueError("No users found in the database")
+
+        # process the fetched data as json and get the user name
+
+        processed_data: list[UsersDataModel] = [
+            my_db.validate_processed_data(
+                validation_model=UsersDataModel,
+                fetched_data=[fetched_user_data],
+            )
+            .pop()
+            .model_dump()
+            for fetched_user_data in all_users_data
+        ]
+    return (
+        jsonify(
+            {
+                "status": "ok",
+                "users": processed_data,
+            }
+        ),
+        200,
+    )
+
+
 def update_user_data(
     db_connection: pymysql.Connection,
     user_id: int,

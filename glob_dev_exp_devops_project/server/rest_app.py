@@ -58,6 +58,7 @@ from glob_dev_exp_devops_project.db.db_connector import (
     add_user_data,
     create_table,
     delete_user_data,
+    get_all_users_from_database,
     get_connection,
     get_user_from_database,
     update_user_data,
@@ -145,6 +146,22 @@ def get_user(
     return get_user_from_database(
         db_connection=get_connection(), user_id=user_id
     )
+
+
+@rest_app.route("/users")
+@rest_app.route("/users/get_all_users", methods=["GET"])
+def get_all_users() -> (
+    tuple[Response, Literal[500] | Literal[200] | Literal[422]]
+):
+    # ) -> tuple[dict[str, Any], Literal[200]]:
+    """
+    Get all the user names from the database.
+
+    Returns:
+        Depending on the success or failure of the operation, it will return
+        a JSON response with the status and the user name or an error message.
+    """
+    return get_all_users_from_database(db_connection=get_connection())
 
 
 @rest_app.route("/users")
